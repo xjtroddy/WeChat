@@ -37,23 +37,7 @@ module.exports = function(opts) {
       let content = await utils.parseXMLAsync(data);
       let message = utils.formatMessage(content.xml);
 
-      if (message.MsgType === 'event') {
-        if (message.Event === 'subscribe') {
-          let now = utils.getTimeStamp();
-
-          ctx.status = 200;
-          ctx.type = 'application/xml';
-          let reply = `<xml>
-            <ToUserName><![CDATA[${message.FromUserName}]]></ToUserName>
-            <FromUserName><![CDATA[${message.ToUserName}]]></FromUserName>
-            <CreateTime>${now}</CreateTime>
-            <MsgType><![CDATA[text]]></MsgType>
-            <Content><![CDATA[你好,我是你大爷]]></Content>
-            </xml>`;
-
-          ctx.body = reply;
-        }
-      }
+      wechat.reply.call(this);
     }
   }
 };

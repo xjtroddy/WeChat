@@ -2,6 +2,7 @@
 const fs = require('fs');
 const Promise = require('bluebird');
 const xml2js = require('xml2js');
+const tpl = require('./../tpl');
 let utils = {
 
 };
@@ -68,6 +69,25 @@ utils.formatMessage = function(result) {
   }
 
   return message;
-}
+};
+
+utils.tpl = function(content, message) {
+  let info = {};
+  let type = 'text';
+  let fromUserName = message.FromUserName;
+  let toUserName = message.ToUserName;
+
+  if (Array.isArray(content)) {
+    type = 'news';
+  } else {
+    type = content.type || type;
+  }
+  info.content = content;
+  info.createTime = this.getTimeStamp();
+  info.msgType = type;
+  info.toUserName = fromUserName;
+  info.fromUserName = toUserName;
+  return tpl.complie(info);
+};
 
 module.exports = utils;
