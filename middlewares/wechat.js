@@ -5,7 +5,6 @@ const request = Promise.promisify(require('request'));
 const sha1 = require('sha1');
 const path = require('path');
 const wechat_file = path.join(__dirname, './../config/wechat.txt');
-const utils = require('./../utils/utils');
 
 
 let prefix = 'https://api.weixin.qq.com/cgi-bin/';
@@ -78,14 +77,16 @@ Wechat.prototype.updateAccessToken = function() {
   });
 };
 
-Wechat.prototype.reply = function(message){
-//this is g.js
- let content = this.body;
- let xml = utils.tpl(content, message);
+Wechat.prototype.reply = function(ctx, message){
+  console.log("ctx:"+ctx);
+  console.log("message:"+message.toString());
 
- this.status = 200;
- this.type = 'application/xml';
- this.body = xml;
+  let content = ctx.body;
+  let xml = utils.tpl(content, message);
+
+  ctx.status = 200;
+  ctx.type = 'application/xml';
+  ctx.body = xml;
 };
 
 module.exports = Wechat;

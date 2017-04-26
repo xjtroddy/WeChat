@@ -72,6 +72,7 @@ utils.formatMessage = function(result) {
 };
 
 utils.tpl = function(content, message) {
+  console.log(content);
   let info = {};
   let type = 'text';
   let fromUserName = message.FromUserName;

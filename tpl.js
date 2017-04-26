@@ -3,7 +3,12 @@ const utils = require('./utils/utils');
 
 let tpl = {};
 
-tpl.complie = function(){
+tpl.complie = function(info){
+  let toUserName = info.toUserName;
+  let fromUserName = info.fromUserName;
+  let createTime = info.createTime;
+  let msgType = info.msgType;
+  let content = info.content;
   let xml = `<xml>
     <ToUserName><![CDATA[${toUserName}]]></ToUserName>
     <FromUserName><![CDATA[${fromUserName}]]></FromUserName>
@@ -47,7 +52,7 @@ tpl.complie = function(){
       xml += `<item>
               <Title><![CDATA[${item.title}]]></Title>
               <Description><![CDATA[${item.description}]]></Description>
-              <PicUrl><![CDATA[${item.picurl}]]></PicUrl>
+              <PicUrl><![CDATA[${item.picUrl}]]></PicUrl>
               <Url><![CDATA[${item.url}]]></Url>
               </item>`;
     });

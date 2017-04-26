@@ -4,7 +4,7 @@ const getRawBody = require('raw-body');
 const utils = require('./../utils/utils');
 
 
-module.exports = function(opts) {
+module.exports = function(opts, handler) {
   let wechat = new Wechat(opts);
   return async ctx => {
   	let query = ctx.query;
@@ -36,8 +36,9 @@ module.exports = function(opts) {
 
       let content = await utils.parseXMLAsync(data);
       let message = utils.formatMessage(content.xml);
-
-      wechat.reply.call(this);
+      console.log(message);
+      await handler(ctx, message);
+      wechat.reply(ctx, message);
     }
   }
 };
