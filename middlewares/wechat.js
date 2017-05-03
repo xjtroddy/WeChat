@@ -5,11 +5,13 @@ const request = Promise.promisify(require('request'));
 const sha1 = require('sha1');
 const path = require('path');
 const wechat_file = path.join(__dirname, './../config/wechat.txt');
+const fs = require('fs');
 
 
 let prefix = 'https://api.weixin.qq.com/cgi-bin/';
 let api = {
-  accessToken : `${prefix}token?grant_type=client_credential`
+  accessToken : `${prefix}token?grant_type=client_credential`,
+  upload: `${prefix}media/upload?`
 };
 
 function Wechat(opts) {
@@ -17,26 +19,7 @@ function Wechat(opts) {
   this.appId = opts.appId;
   this.appSecret = opts.appSecret;
 
-  this.getAccessToken()
-    .then(data => {
-      try {
-        data = JSON.parse(data);
-      }
-      catch(e) {
-        return self.updateAccessToken();
-      }
-      if (self.isValidAccessToken(data)) {
-        return Promise.resolve(data);
-      } else {
-        return self.updateAccessToken();
-      }
-    })
-    .then(data => {
-      self.access_token = data.access_token;
-      self.expires_in = data.expires_in;
-
-      self.saveAccessToken(data);
-    });
+  this.fetchAccessToken();
   }
 
 Wechat.prototype.getAccessToken = function(){
@@ -75,6 +58,59 @@ Wechat.prototype.updateAccessToken = function() {
       resolve(data);
     });
   });
+};
+
+Wechat.prototype.uploadMaterial = function(type, filepath) {
+  console.log("file:"+filepath);
+  let self = this;
+  let form = {
+    media: fs.createReadStream(filepath)
+  };
+  return new Promise((resolve, reject) => {
+    self.fetchAccessToken().then(data => {
+      let url = api.upload + `access_token=${data.access_token}&type=${type}`;
+      console.log('utl:' + url);
+      request({method: 'POST', url: url, formData: form, json:true}).then((response) => {
+        let _data = response.body;
+        if (_data) {
+          resolve(_data);
+        } else {
+          throw new Error('Upload material failed');
+        }
+      })
+      .catch(function(err) {
+        reject(err);
+      });
+    });
+  });
+};
+
+Wechat.prototype.fetchAccessToken = function () {
+  let self = this;
+  if (this.isValidAccessToken(self)) {
+    return Promise.resolve(this);
+  }
+  this.getAccessToken()
+    .then(data => {
+      try {
+        data = JSON.parse(data);
+      }
+      catch(e) {
+        return self.updateAccessToken();
+      }
+      if (self.isValidAccessToken(data)) {
+        return Promise.resolve(data);
+      } else {
+        return self.updateAccessToken();
+      }
+    })
+    .then(data => {
+      self.access_token = data.access_token;
+      self.expires_in = data.expires_in;
+
+      self.saveAccessToken(data);
+      return Promise.resolve(data);
+    });
 };
 
 Wechat.prototype.reply = function(ctx, message){

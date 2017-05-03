@@ -1,4 +1,8 @@
 'use strict';
+const config = require('./config/config');
+const Wechat = require('./middlewares/wechat');
+const wechat = new Wechat(config);
+
 
 let weixin = {};
 
@@ -41,6 +45,41 @@ weixin.reply = async function (ctx, message) {
           picUrl: 'https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1493235146842&di=7a552f566d3255666a00e0d382f07836&imgtype=0&src=http%3A%2F%2Fimg27.51tietu.net%2Fpic%2F2017-011500%2F20170115001256mo4qcbhixee164299.jpg',
           url: 'www.baidu.com'
         }]
+      } else if (content === '图片') {
+        let data = await wechat.uploadMaterial('image', __dirname + '/2.jpg');
+        if (data.errcode) {
+          reply = data.errcode + ' ' + data.errmsg;
+        } else {
+          reply = {
+            type: 'image',
+            mediaId: data.media_id
+          }
+        }
+      } else if (content === '视频') {
+        let data = await wechat.uploadMaterial('video', __dirname + '/3.mp4');
+        if (data.errcode) {
+          reply = data.errcode + ' ' + data.errmsg;
+        } else {
+          reply = {
+            type: 'video',
+            title: '小视频',
+            description: '妈个鸡',
+            mediaId: data.media_id
+          }
+        }
+      } else if (content === '音乐') {
+        let data = await wechat.uploadMaterial('image', __dirname + '/2.jpg');
+        if (data.errcode) {
+          reply = data.errcode + ' ' + data.errmsg;
+        } else {
+          reply = {
+            type: 'music',
+            title: '音乐',
+            description: '小音乐',
+            musicUrl: __dirname + '/4.mp3',
+            thumbMediaId: data.media_id
+          }
+        }
       }
 
       ctx.body = reply;
