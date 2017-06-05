@@ -2,8 +2,8 @@
 
 const config = {};
 
-config.appId = "wx6830fe290ab2a561";
-config.appSecret = "1c3c420d4c9397fba594d7ed4ec606ee";
+config.appId = "wxabd11cbf0215c5f5";
+config.appSecret = "197dc123c6e5ee0586f31f9fd22a6ac1";
 config.token = "roddyWeChatApplication";
 
 module.exports = config;

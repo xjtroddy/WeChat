@@ -1,4 +1,5 @@
 "use strict";
+const _ = require('lodash');
 const utils = require('./../utils/utils');
 const Promise = require('bluebird');
 const request = Promise.promisify(require('request'));
@@ -11,7 +12,20 @@ const fs = require('fs');
 let prefix = 'https://api.weixin.qq.com/cgi-bin/';
 let api = {
   accessToken : `${prefix}token?grant_type=client_credential`,
-  upload: `${prefix}media/upload?`
+  temporary: {
+    upload: `${prefix}media/upload?`,
+    fetch: `${prefix}media/get?`
+  },
+  permanent: {
+    upload: `${prefix}material/add_material?`,
+    uploadNews: `${prefix}material/add_news?`,
+    uploadNewsPic: `${prefix}media/uploadimg?`,
+    fetch: `${prefix}material/get_material?`,
+    del: `${prefix}material/delete_material?`,
+    update: `${prefix}material/update_news?`,
+    count: `${prefix}material/get_materialcount?`,
+    batch: `${prefix}material/batchget_material?`
+  }
 };
 
 function Wechat(opts) {
@@ -60,22 +74,198 @@ Wechat.prototype.updateAccessToken = function() {
   });
 };
 
-Wechat.prototype.uploadMaterial = function(type, filepath) {
-  console.log("file:"+filepath);
+Wechat.prototype.uploadMaterial = function(type, material, permanent) {
+  console.log("upload material:"+material);
   let self = this;
-  let form = {
-    media: fs.createReadStream(filepath)
-  };
+  let form = {};
+  let uploadUrl = api.temporary.upload;
+  if (permanent){
+    uploadUrl = api.permanent.upload;
+    _.extend(form, permanent);
+  }
+
+  if (type === 'pic') {
+    uploadUrl = api.permanent.uploadNewsPic;
+  } else if (type === 'news') {
+    uploadUrl = api.permanent.uploadNews;
+    form = material;
+  } else {
+    form.media = fs.createReadStream(material);
+  }
   return new Promise((resolve, reject) => {
     self.fetchAccessToken().then(data => {
-      let url = api.upload + `access_token=${data.access_token}&type=${type}`;
-      console.log('utl:' + url);
-      request({method: 'POST', url: url, formData: form, json:true}).then((response) => {
+      let url = uploadUrl += `access_token=${data.access_token}&type=${type}`;
+      if (permanent) {
+        form.access_token = data.access_token;
+      }
+
+      let options = {
+        method: "POST",
+        url: url,
+        json: true
+      }
+      if(type === 'news') {
+        options.body = form;
+      } else {
+        options.formData = form;
+      }
+
+
+      console.log('uploadUrl:' + url);
+      request(options).then((response) => {
         let _data = response.body;
         if (_data) {
           resolve(_data);
         } else {
           throw new Error('Upload material failed');
+        }
+      })
+      .catch(function(err) {
+        reject(err);
+      });
+    });
+  });
+};
+
+Wechat.prototype.fetchMaterial = function(mediaId, type, permanent) {
+  console.log("fetch material:"+mediaId);
+  let self = this;
+  let fetchUrl = api.temporary.fetch;
+  if (permanent){
+    fetchUrl = api.permanent.fetch;
+  }
+
+  return new Promise((resolve, reject) => {
+    self.fetchAccessToken().then(data => {
+      let url = fetchUrl += `access_token=${data.access_token}`;
+      console.log('fetchUrl:' + url);
+      let options = {method: 'POST', url: url, json: true};
+      let form = {};
+      if (permanent) {
+        form.media_id = mediaId;
+        form.access_token = data.access_token;
+        options.body = form;
+      } else {
+        if (type === 'video') {
+          url.replace('https://', 'http://');
+        }
+        url += `&media_id=${mediaId}`;
+      }
+
+      if (type === 'news' || type === 'video') {
+        request(options).then((response) => {
+          let _data = response.body;
+          if (_data) {
+            resolve(_data);
+          } else {
+            throw new Error('Delete material failed');
+          }
+        })
+        .catch(function(err) {
+          reject(err);
+        });
+      } else {
+        resolve(url);
+      }
+
+
+    });
+  });
+};
+
+Wechat.prototype.deleteMaterial = function(mediaId) {
+  console.log("delete material:"+mediaId);
+  let self = this;
+  let form = {
+    media_id: mediaId
+  };
+
+  return new Promise((resolve, reject) => {
+    self.fetchAccessToken().then(data => {
+      let url = api.permanent.del += `access_token=${data.access_token}&media_id=${mediaId}`;
+      console.log('deleteUrl:' + url);
+      request({method: 'POST', url: url, body: form, json: true}).then((response) => {
+        let _data = response.body;
+        if (_data) {
+          resolve(_data);
+        } else {
+          throw new Error('Delete material failed');
+        }
+      })
+      .catch(function(err) {
+        reject(err);
+      });
+    });
+  });
+};
+
+Wechat.prototype.updateMaterial = function(mediaId, news) {
+  console.log("update material:"+mediaId);
+  let self = this;
+  let form = {
+    media_id: mediaId
+  };
+
+  _.extend(form, news);
+  return new Promise((resolve, reject) => {
+    self.fetchAccessToken().then(data => {
+      let url = api.permanent.update += `access_token=${data.access_token}&media_id=${mediaId}`;
+      console.log('updateUrl:' + url);
+      request({method: 'POST', url: url, body: form, json: true}).then((response) => {
+        let _data = response.body;
+        if (_data) {
+          resolve(_data);
+        } else {
+          throw new Error('Update material failed');
+        }
+      })
+      .catch(function(err) {
+        reject(err);
+      });
+    });
+  });
+};
+
+Wechat.prototype.countMaterial = function() {
+  console.log("get material count");
+  let self = this;
+  return new Promise((resolve, reject) => {
+    self.fetchAccessToken().then(data => {
+      let url = api.permanent.count += `access_token=${data.access_token}`;
+      console.log('countUrl:' + url);
+      request({method: 'GET', url: url, json: true}).then((response) => {
+        let _data = response.body;
+        if (_data) {
+          resolve(_data);
+        } else {
+          throw new Error('count material failed');
+        }
+      })
+      .catch(function(err) {
+        reject(err);
+      });
+    });
+  });
+};
+
+Wechat.prototype.batchMaterial = function(options) {
+  console.log("batch material");
+  let self = this;
+
+  options.type = options.type || 'image';
+  options.offset = options.offset || 0;
+  options.count = options.count || 1;
+
+  return new Promise((resolve, reject) => {
+    self.fetchAccessToken().then(data => {
+      let url = api.permanent.batch + `access_token=${data.access_token}`;
+      console.log('batchUrl:' + url);
+      request({method: 'POST', url: url, body: options, json: true}).then((response) => {
+        let _data = response.body;
+        if (_data) {
+          resolve(_data);
+        } else {
+          throw new Error('batch material failed');
         }
       })
       .catch(function(err) {
@@ -114,8 +304,6 @@ Wechat.prototype.fetchAccessToken = function () {
 };
 
 Wechat.prototype.reply = function(ctx, message){
-  console.log("ctx:"+ctx);
-  console.log("message:"+message.toString());
 
   let content = ctx.body;
   let xml = utils.tpl(content, message);

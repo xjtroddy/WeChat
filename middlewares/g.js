@@ -36,7 +36,7 @@ module.exports = function(opts, handler) {
 
       let content = await utils.parseXMLAsync(data);
       let message = utils.formatMessage(content.xml);
-      console.log(message);
+      console.log("get message:" + JSON.stringify(message));
       await handler(ctx, message);
       wechat.reply(ctx, message);
     }

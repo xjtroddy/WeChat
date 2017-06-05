@@ -40,9 +40,9 @@ tpl.complie = function(info){
             <Music>
             <Title><![CDATA[${content.title}]]></Title>
             <Description><![CDATA[${content.description}]]></Description>
-            <MusicUrl><![CDATA[${content.music_url}]]></MusicUrl>
-            <HQMusicUrl><![CDATA[${content.hq_music_url}]]></HQMusicUrl>
-            <ThumbMediaId><![CDATA[${content.media_id}]]></ThumbMediaId>
+            <MusicUrl><![CDATA[${content.musicUrl}]]></MusicUrl>
+            <HQMusicUrl><![CDATA[${content.hqMusicUrl}]]></HQMusicUrl>
+            <ThumbMediaId><![CDATA[${content.thumbMediaId}]]></ThumbMediaId>
             </Music>`;
   } else if (msgType === "news") {
     xml += `<MsgType><![CDATA[news]]></MsgType>

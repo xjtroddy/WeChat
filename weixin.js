@@ -13,11 +13,13 @@ weixin.reply = async function (ctx, message) {
     if (message.Event === 'subscribe') {
       if (message.EventKey) {
         console.log("通过扫描二维码关注，二维码：" + message.EventKey + ' ' + message.Ticket);
+      } else {
+        console.log("user:" + message.FromUserName + 'subscribe');
       }
-      ctx.body = '你订阅了这个sb公众号，\r\n 消息id：' + message.MsgId;
+      ctx.body = '你订阅了这个sb公众号';
     } else if (message.Event === 'unsubscribe') {
       ctx.body = "";
-      console.log('无情取关');
+      console.log('user:' + message.FromUserName + ' unsubscribe');
     } else if (message.Event === 'LOCATION') {
       ctx.body = `上报位置是:纬度:${message.Latitude},经度:${message.Longitude},精度:${message.Precision}`;
     } else if (message.Event === 'CLICK') {
@@ -34,11 +36,7 @@ weixin.reply = async function (ctx, message) {
 
       if (content === '1') {
         reply = '1111111111';
-      } else if (content === '2') {
-        reply = '2222222222';
-      } else if (content === '3') {
-        reply = '3333333333';
-      } else if (content === '4') {
+      } else if (content === '图文') {
         reply = [{
           title: '6666',
           description: 'miaoshu1',
@@ -63,12 +61,12 @@ weixin.reply = async function (ctx, message) {
           reply = {
             type: 'video',
             title: '小视频',
-            description: '妈个鸡',
+            description: '小视频描述',
             mediaId: data.media_id
           }
         }
       } else if (content === '音乐') {
-        let data = await wechat.uploadMaterial('image', __dirname + '/2.jpg');
+        let data = await wechat.uploadMaterial('voice', __dirname + '/4.mp3');
         if (data.errcode) {
           reply = data.errcode + ' ' + data.errmsg;
         } else {
@@ -77,11 +75,99 @@ weixin.reply = async function (ctx, message) {
             title: '音乐',
             description: '小音乐',
             musicUrl: __dirname + '/4.mp3',
+            hqMusicUrl:  __dirname + '/4.mp3',
             thumbMediaId: data.media_id
           }
         }
-      }
+      } else if (content === '永久图片') {
+        let data = await wechat.uploadMaterial('image', __dirname + '/2.jpg', {type: 'image'});
+        if (data.errcode) {
+          reply = data.errcode + ' ' + data.errmsg;
+        } else {
+          reply = {
+            type: 'image',
+            mediaId: data.media_id
+          };
+        }
+      } else if (content === '永久视频') {
+        let data = await wechat.uploadMaterial('video', __dirname + '/3.mp4',
+        {type: 'video', description:'{"title":"it is a title", "introduction":"it is introduction"}'});
+        if (data.errcode) {
+          reply = data.errcode + ' ' + data.errmsg;
+        } else {
+          reply = {
+            type: 'video',
+            title: '小视频',
+            description: '小视频描述',
+            mediaId: data.media_id
+          }
+        }
+      } else if (content === '测试') {
+        let picData = await wechat.uploadMaterial('image', __dirname + '/2.jpg',
+        {});
 
+        let media = {
+          articles: [{
+            title: 'hehehe',
+            thumb_media_id: picData.media_id,
+            author: "Roddy",
+            digest: "摘要",
+            show_cover_pic: 1,
+            content: '内容',
+            content_source_url: 'www.baidu.com'
+          }]
+        };
+
+        let data = await wechat.uploadMaterial('news', media, {});
+        data = await wechat.fetchMaterial(data.media_id, 'news', {});
+
+        let items = data.news_item;
+        let news = [];
+
+        items.forEach((item) => {
+          news.push({
+            title: item.title,
+            description: item.digest,
+            picUrl: picData.url,
+            url: item.url
+          });
+        });
+
+        reply = news;
+      } else if (content === '拿数据') {
+        let counts = await wechat.countMaterial();
+        console.log('素材总数:' + JSON.stringify(counts));
+
+        let imageList = await wechat.batchMaterial({
+          offset: 0,
+          count: 10,
+          type: 'image'
+        });
+
+        let newsList = await wechat.batchMaterial({
+          offset: 0,
+          count: 10,
+          type: 'news'
+        });
+
+        let videoList = await wechat.batchMaterial({
+          offset: 0,
+          count: 10,
+          type: 'video'
+        });
+
+        let voiceList = await wechat.batchMaterial({
+          offset: 0,
+          count: 10,
+          type: 'voice'
+        });
+
+        console.log(imageList, newsList, videoList, voiceList);
+        reply = "看后台";
+      }
       ctx.body = reply;
+  } else if (message.MsgType === 'image') {
+    let reply = "这是一张图片";
+    ctx.body = reply;
   }
 }
