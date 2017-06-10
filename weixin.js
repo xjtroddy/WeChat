@@ -164,6 +164,18 @@ weixin.reply = async function (ctx, message) {
 
         console.log(imageList, newsList, videoList, voiceList);
         reply = "看后台";
+      } else if (content === "用户数据") {
+        let user = wechat.fetchUsers(message.FromUserName);
+        console.log(user);
+        let openIds = [
+          {
+            openid: message.FromUserName,
+            lang: 'en'
+          }
+        ]
+        let users = wechat.fetchUsers(openIds);
+        console.log(users);
+        reply = JSON.stringify(user);
       }
       ctx.body = reply;
   } else if (message.MsgType === 'image') {
